@@ -1,0 +1,49 @@
+
+//**************************************************************************************************
+//Juan Pablo Gomes Villela 17517                                                              ******
+//José Pablo De León Salguero 17001                                                           ******
+//Digital 2                                                                                   ******
+//PROYECTO: CARRO 8 BITS                                                                      ******
+//***************************************************************************************************
+//******************************************************************************
+//ESTA PARTE ES LA IMPLEMENTACION DE TODAS LAS LIBRERIAS NECESARIAS 
+//PARA PODER INICIALIZAR LA PANTALA ILI9341 EN ARDUINO 
+#include <SD.h>
+#define SD_ChipSelectPin 4 
+#include <TMRpcm.h> 
+#include <SPI.h> 
+#include<pcmConfig.h>
+#include<pcmRF.h>
+TMRpcm tmrpcm; 
+//***************************************************************************** 
+//SE DECLARA LAS VARIABLES A UTILIZAR PARA LOS BOTONES 
+//DE LOS DOS JUGADORES 
+//********************************************************************************
+int temp=1;
+int pp=5;
+int next=6;
+int prev=7;
+void setup()
+{ 
+ pinMode(pp,INPUT_PULLUP);
+ pinMode(next,INPUT_PULLUP);
+ pinMode(prev,INPUT_PULLUP);
+ 
+ tmrpcm.speakerPin = 9; 
+ Serial.begin(9600);
+ if (!SD.begin(SD_ChipSelectPin)) 
+ {
+  Serial.println("SD fail");
+  return;
+ }
+
+ tmrpcm.setVolume(5); //
+ tmrpcm.quality(1);
+ tmrpcm.play("dos.wav"); 
+                     
+}
+
+void loop()
+{   
+}
+

@@ -1,0 +1,476 @@
+//**************************************************************************************************
+//Juan Pablo Gomes Villela 17517                                                              ******
+//José Pablo De León Salguero 17001                                                           ******
+//Digital 2                                                                                   ******
+//PROYECTO: CARRO 8 BITS                                                                      ******
+//***************************************************************************************************
+
+//******************************************************************************
+//ESTA PARTE ES LA IMPLEMENTACION DE TODAS LAS LIBRERIAS NECESARIAS 
+//PARA PODER INICIALIZAR LA PANTALA ILI9341 EN ARDUINO 
+#include <SPI.h>
+#include <Adafruit_TFTLCD.h>
+#include <Adafruit_GFX.h>
+#include <MCUFRIEND_kbv.h>
+MCUFRIEND_kbv tft;
+#include <UTFT.h> 
+#include <URTouch.h>
+#include <EEPROM.h>
+#include "COLORES.h"
+//***************************************************************************** 
+//SE DECLARA LAS VARIABLES A UTILIZAR PARA LOS BOTONES 
+//DE LOS DOS JUGADORES 
+//********************************************************************************
+const int dere1 = 10;
+const int izqu1 = 11;
+const int dere2 = 12; 
+const int izqu2 = 13; 
+int buttonState1 = 0;
+int buttonState2 = 0;
+int buttonState3 = 0;
+int buttonState4 = 0;
+int color;
+int x;
+int x2;
+int y;
+int y2;
+int n=1;
+int push = 0;
+int xP = 319;
+int yP = 100;
+int yB = 50;
+int movingRate = 3;
+int fallRateInt = 0;
+float fallRate = 0;
+int score = 0;
+int lastSpeedUpScore = 0;
+int highestScore;
+boolean screenPressed = false;
+boolean gameStarted = false;
+//**************************************************************
+// Pines de conexion del LCD CON ARDUINO 
+//************************************************************
+#define LCD_RESET A4 // LCD Reset - Pin Analogico 4
+#define LCD_CS A3 // Chip Select - Pin analogico 3
+#define LCD_RS  A2 // Command/Data - Pin Analogico 2
+#define LCD_WR A1 // LCD Write - Pin Analogico 1
+#define LCD_RD A0 // LCD Read - Pin Analogico 0
+//*******************************************************************************
+//FUNCIONES PROTOTIPOS                                                         **
+//*******************************************************************************
+void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
+void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
+void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
+void fillScreen(uint16_t color);// { fillRect(0, 0, _width, _height, color); };
+void setAddrWindow(int16_t, int16_t, int16_t, int16_t);
+void LCD_Init(void);
+//***********************************************************************
+//LLAMAMOS TODAS LAS FUNCIONES CREADAS PARA QUE SE REALIZEN 
+//************************************************************************
+void setup(void);
+void loop(void);
+unsigned long testFillScreen();
+unsigned long testText();
+unsigned long testLines(uint16_t color);
+unsigned long testFastLines(uint16_t color1, uint16_t color2);
+unsigned long testRects(uint16_t color);
+unsigned long testFilledRects(uint16_t color1, uint16_t color2);
+unsigned long testFilledCircles(uint8_t radius, uint16_t color);
+unsigned long testCircles(uint8_t radius, uint16_t color);
+//tft.drawFastVLine(int16_t x, int16_t y, int16_t L, uint16_t color)
+//*************************************************************************
+//*************************************************************************
+// Inicialización
+//**************************************************************************
+void setup() {
+ pinMode(10, INPUT_PULLUP); //Button 1 with internal pull up
+ pinMode(11, INPUT_PULLUP); //Button 1 with internal pull up
+ pinMode(12, INPUT_PULLUP); //Button 1 with internal pull up
+ pinMode(13, INPUT_PULLUP); //Button 1 with internal pull up
+//*************************************************************************
+//ESTA PARTE ES LA INICIALIZACION DE LA PANTALLA CON ARDUINO 
+  Serial.begin(9600);
+  tft.reset();
+  uint16_t identifier = tft.readID();
+  Serial.print("ID=0x");
+  Serial.println(identifier, HEX);
+  if(identifier == 0xEFEF) identifier = 0x9486;
+  tft.begin(identifier);
+  tft.setRotation (1);    //SE PONE HORIZONTAL PANTALLA
+  tft.fillScreen(BLACK); //COLOR DEL FONDO PANTALLA 
+  
+//*********************************************************************
+//SE LLAMAN LAS FUNCIONES CREADAS PARA QUE SE HAGAN SOLO UNA VEZ
+// NO VAVIAS VECES
+//******************************************************************** 
+  pantalla1();
+  welcome();
+  jugador1();
+  jugador2();
+  edificio();
+  linea();
+    
+//fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
+tft. fillRect(0,120,320,1, YELLOW); }//CREACION DE LA LINEA DIVISORA 
+                                   // DE LOS JUGADORES 
+//*********************************************************************
+//LOOP***************************
+//**********************************************************************
+void loop() {
+//gameOver();
+  uint16_t dx, rgb, n, wid, ht;
+  wid = tft.width();  // 480
+  ht = tft.height();  // 320
+  
+  Serial.print("wid: ");
+  Serial.println(wid);
+  Serial.print("ht: ");
+  Serial.println(ht);
+//*******************************************************************************
+//LLAMDA DE BITMAP, QUE ESTAN EN LA PARTE DE ICONS 
+//DONDE SE ENCUENTRAN LA MATRICES DE ESTOS 
+//*****************************************************************************
+   extern const uint8_t carro_dos[];
+  extern const uint8_t carro_cinco[];
+  extern const uint8_t carro1_dos[];
+  extern const uint8_t carro1_cuatro[];
+  
+//***********************************************************************************
+linea(); ///SE LLAMA FUNCION PARA CREAR LA CARRETERA DE LOS JUGADORES 
+nuve(); //SE LLAMA LOS OBSTACULOS QUE TIENEN QUE APARECER CIERTO TIEMPO
+//***********************************************************************************  
+ buttonState1 = digitalRead(dere1);  //DECLARACION DE LOS 
+ buttonState2 = digitalRead(dere2);  //LOS BOTONES PARA QUE SEAN LIDOS 
+ buttonState3 = digitalRead(izqu1);
+ buttonState4 = digitalRead(izqu2);
+
+//---------------------------------------------------------------------------
+//PARTE EN LA CUAL ES PARA PRESIONAR LOS BOTONES Y CADA UNA DE LAS 
+//FUNCIONES QUE SON PARA MOVER EL CARRO SE ACCIONEN 
+//**************************************************************************
+//  if (dere1 == 1 && dere2 == 1
+//  ){
+//   tft.setAddrWindow(120,70,120+48-1,70+32-1);
+//  tft.pushColors(carro_cinco, 1536, 1);
+//  tft.setAddrWindow(120,200,120+45-1,200+32-1);
+//  tft.pushColors(carro1_cuatro, 1456, 1);
+//    
+//    }
+//   else if (izqu1 == 0 && izqu == 0
+//  ){
+//    tft.setAddrWindow(120,70,120+48-1,70+32-1);
+//  tft.pushColors(carro_cinco, 1536, 1);
+//  tft.setAddrWindow(120,200,120+45-1,200+32-1);
+//  tft.pushColors(carro1_cuatro, 1456, 1);
+//    }
+//
+//    else if (izqu1 == 1 && izqu == 1
+//  ){
+//    tft.setAddrWindow(120,70,120+48-1,70+32-1);
+//  tft.pushColors(carro_cinco, 1536, 1);
+//  tft.setAddrWindow(120,200,120+45-1,200+32-1);
+//  tft.pushColors(carro1_cuatro, 1456, 1);
+//    }
+//  
+//************************************************************************************
+//************************************************************************************
+
+//******************************************************************************
+//*****************************
+//CARRO LOS DOS
+//******************************
+  
+  
+
+  
+  tft.setAddrWindow(wid - 240 - 40, 20 + 50, wid - 1 - 100, 70 + 83 - 1);
+//  tft.pushColors(VS_Chem10083, 8300, 1);
+  delay(8);
+
+
+}
+
+//********************************************************************
+//PANTALLA CON DETALLES 
+//LA CREACION DE LOS MARGUENES PARA LA GRAMA
+//*****************************************************************
+void pantalla1(){
+  //fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
+  tft.fillRect(0, 0, 70, 240, OSCURO);
+  tft.fillRect(250, 0, 120, 240, OSCURO);
+  }
+  
+//*************************************************************************
+//JP2 DONDE APARECE SU NOMBRE Y SU PUNTAJE
+//************************************************************************
+void jugador2(){
+  tft.setCursor(280,122);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(2);
+  tft.print("JP2");
+  tft.setCursor(5,230);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(1.9);
+  tft.print("Score: ");
+  
+  }
+//****************************************************************
+//JP1 DONDE APARECE SU NOMBRE Y SU PUNTAJE 
+//****************************************************************  
+  void jugador1(){
+  tft.setCursor(280,0);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(2);
+  tft.print("JP1");
+  tft.setCursor(5,110); //POSICION EN X,Y
+  tft.setTextColor(BLACK );//COLOR DE LETRA
+  tft.setTextSize(1.9);//TAMAÑO DE LETRA
+  tft.print("Score: ");//TEXTO
+  
+  }
+
+//****************************************************************
+//WELCOME, DONDE DA LA BIENBENIDA A LOS JUGADORES 
+//****************************************************************
+void welcome(){
+tft.setCursor(10,0); //SE PONE X,Y 
+  tft.setTextColor(BLACK); //COLOR DE LETRA
+  tft.setTextSize(1.5); //TAMAÑO DE LETRA
+  tft.print("WELCOME"); //TEXTO
+  
+
+  tft.setCursor(15,8);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(1.5);
+  tft.print("JP1");
+
+  tft.setCursor(10,128);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(1.5);
+  tft.print("WELCOME");
+  
+
+  tft.setCursor(15,140);
+  tft.setTextColor(BLACK);
+  tft.setTextSize(1.5);
+  tft.print("JP2"); 
+}
+
+//***************************************************
+//PARA PONER EL EDIFICIO DE GRAFICO 
+//EN LOS MARGUENES DEL JUEGO 
+//****************************************
+void edificio (){
+  
+  extern const uint8_t prueba []; //SE LLAMA LA MATRIZ
+  tft.setAddrWindow(20,20,20+16-1,20+22-1); //SE PONE X,Y,H 
+ tft.pushColors(prueba, 352, 1); //SE PONE NOMBRE, BITS, ENCENDIDO
+
+ tft.setAddrWindow(260,10,260+16-1,10+22-1);
+ tft.pushColors(prueba, 352, 1);
+
+tft.setAddrWindow(280,20,280+16-1,20+22-1);
+ tft.pushColors(prueba, 352, 1);
+
+ tft.setAddrWindow(40,10,40+16-1,10+22-1);
+ tft.pushColors(prueba, 352, 1);
+
+
+  tft.setAddrWindow(20,60,20+16-1,60+22-1);
+ tft.pushColors(prueba, 352, 1);
+
+ tft.setAddrWindow(260,60,260+16-1,60+22-1);
+ tft.pushColors(prueba, 352, 1);
+
+tft.setAddrWindow(280,80,280+16-1,80+22-1);
+ tft.pushColors(prueba, 352, 1);
+
+ tft.setAddrWindow(40,80,40+16-1,80+22-1);
+ tft.pushColors(prueba, 352, 1);
+
+///***********************************
+tft.setAddrWindow(20,155,20+16-1,155+22-1);
+ tft.pushColors(prueba, 352, 1);
+
+ tft.setAddrWindow(260,135,260+16-1,145+22-1);
+ tft.pushColors(prueba, 352, 1);
+
+tft.setAddrWindow(280,145,280+16-1,145+22-1);
+ tft.pushColors(prueba, 352, 1);
+
+ tft.setAddrWindow(40,135,40+16-1,135+22-1);
+ tft.pushColors(prueba, 352, 1);
+
+
+
+  tft.setAddrWindow(20,180,20+16-1,180+22-1);
+ tft.pushColors(prueba, 352, 1);
+
+ tft.setAddrWindow(260,160,260+16-1,160+22-1);
+ tft.pushColors(prueba, 352, 1);
+
+tft.setAddrWindow(280,180,280+16-1,180+22-1);
+ tft.pushColors(prueba, 352, 1);
+
+ tft.setAddrWindow(40,190,40+16-1,190+22-1);
+ tft.pushColors(prueba, 352, 1);
+ //************************************ 
+  }
+
+//***********************************************
+//SE COLOCA LAS LINEAS DE LA CARRETERA
+//*********************************************
+  void linea(){
+    
+    tft.fillRect(150, 10, 2, 15, WHITE);
+    tft.fillRect(150, 30, 2, 15, WHITE);
+    tft.fillRect(150, 50, 2, 15, WHITE);
+    tft.fillRect(150, 70, 2, 15, WHITE);
+    tft.fillRect(150, 90, 2, 15,WHITE);
+
+    tft.fillRect(150, 130, 2, 15, WHITE);
+    tft.fillRect(150, 150, 2, 15, WHITE);
+    tft.fillRect(150, 170, 2, 15, WHITE);
+    tft.fillRect(150, 190, 2, 15, WHITE);
+    tft.fillRect(150, 210, 2, 15, WHITE);
+
+
+    tft.fillRect(80, 10, 2, 15, WHITE);
+    tft.fillRect(80, 30, 2, 15, WHITE);
+    tft.fillRect(80, 50, 2, 15, WHITE);
+    tft.fillRect(80, 70, 2, 15, WHITE);
+    tft.fillRect(80, 90, 2, 15, WHITE);
+
+
+     tft.fillRect(230, 10, 2, 15, WHITE);
+     tft.fillRect(230, 30, 2, 15, WHITE);
+     tft.fillRect(230, 50, 2, 15, WHITE);
+     tft.fillRect(230, 70, 2, 15, WHITE);
+     tft.fillRect(230, 90, 2, 15, WHITE);
+
+
+        
+    tft.fillRect(80, 130, 2, 15, WHITE);
+    tft.fillRect(80, 150, 2, 15, WHITE);
+    tft.fillRect(80, 170, 2, 15, WHITE);
+    tft.fillRect(80, 190, 2, 15, WHITE);
+    tft.fillRect(80, 210, 2, 15, WHITE);
+
+
+    tft.fillRect(230, 130, 2, 15, WHITE);
+    tft.fillRect(230, 150, 2, 15, WHITE);
+    tft.fillRect(230, 170, 2, 15, WHITE);
+    tft.fillRect(230, 190, 2, 15, WHITE);
+    tft.fillRect(230, 210, 2, 15, WHITE);
+    
+    }
+
+//*****************************************
+//OBSTACULOS MAS LAS MATRICES DE LOS CARROS 
+//************************************
+   void nuve(){
+    extern const uint8_t nuve[];  //SE LLAMA LA MATRIZ 
+    extern const uint8_t carro_dos[];
+    extern const uint8_t carro_cinco[];
+    extern const uint8_t carro1_dos[];
+    extern const uint8_t carro1_cuatro[];
+    //********************************************************************************
+//*********************************
+//NUVES
+//**********************************
+  tft.setAddrWindow(100,20,100+24-1,20+22-1); //COLOCA X,Y,H
+  tft.pushColors(nuve, 528, 1);  //SE COLOCA NOMBRE, BITS, ENCENDIDO
+  tft.setAddrWindow(180,135,180+24-1,135+22-1);
+  tft.pushColors(nuve, 528, 1);
+  
+   delay(800);
+   tft.fillRect(120, 70, 48, 32, BLACK ); //SE COLOCA PARA 
+  tft.fillRect(120, 200, 45, 32, BLACK ); //PINTAR PANTALLA
+  tft.fillRect(100, 20, 48, 32, BLACK ); //DE NUEVO
+  tft.fillRect(180, 135, 45, 32, BLACK );
+
+
+  tft.setAddrWindow(180,40,180+24-1,40+22-1);
+  tft.pushColors(nuve, 528, 1);
+  tft.setAddrWindow(100,155,100+24-1,155+22-1);
+  tft.pushColors(nuve, 528, 1);
+  tft.setAddrWindow(150,40,150+48-1,40+32-1);
+   tft.pushColors(carro_dos, 1536, 1);
+   tft.setAddrWindow(150,170,150+45-1,170+32-1);
+   tft.pushColors(carro1_dos, 1456, 1);
+   delay(800);
+   tft.fillRect(150, 40, 48, 32, BLACK );
+   tft.fillRect(150, 170, 45, 32, BLACK );
+  tft.fillRect(180, 40, 45, 32, BLACK );
+  tft.fillRect(100, 155, 48, 32, BLACK );
+
+  tft.setAddrWindow(100,60,100+24-1,60+22-1);
+  tft.pushColors(nuve, 528, 1);
+  tft.setAddrWindow(180,60,180+24-1,60+22-1);
+  tft.pushColors(nuve, 528, 1);
+  tft.setAddrWindow(100,175,100+24-1,175+22-1);
+  tft.pushColors(nuve, 528, 1);
+  tft.setAddrWindow(180,175,180+24-1,175+22-1);
+  tft.pushColors(nuve, 528, 1);
+   delay(800);
+  tft.fillRect(100, 60, 48, 32, BLACK );
+  tft.fillRect(180, 60, 45, 32, BLACK );
+  tft.fillRect(100, 175, 48, 32, BLACK );
+  tft.fillRect(180, 175, 45, 32, BLACK );
+
+  tft.setAddrWindow(140,80,140+24-1,80+22-1);
+  tft.pushColors(nuve, 528, 1);
+   tft.setAddrWindow(140,195,140+24-1,195+22-1);
+  tft.pushColors(nuve, 528, 1);
+  tft.setAddrWindow(120,10,120+48-1,10+32-1);
+  tft.pushColors(carro_cinco, 1536, 1);
+  tft.setAddrWindow(120,130,120+45-1,130+32-1);
+  tft.pushColors(carro1_cuatro, 1456, 1);
+   delay(800);
+   tft.fillRect(120, 10, 48, 32, BLACK );
+  tft.fillRect(120, 130, 45, 32, BLACK );
+  tft.fillRect(140, 80, 48, 32, BLACK );
+   tft.fillRect(140,195, 45, 32, BLACK );
+
+  }
+//**********************************************
+//Funcion para crear la pantalla 
+// DE GAME OVER DEL JUEGO
+//-------------------------------------------
+  void gameOver() {
+  delay(3000); // 1 second
+  // Clears the screen and prints the text
+   tft.reset();
+   uint16_t identifier = tft.readID();
+  Serial.print("ID=0x");
+  Serial.println(identifier, HEX);
+  if(identifier == 0xEFEF) identifier = 0x9486;
+  tft.begin(identifier);
+  tft.setRotation (1);
+  tft.fillScreen(BLACK); //COLOR DEL FONDO PANTALLA 
+//  myGLCD.print("GAME OVER", CENTER, 40);
+//  myGLCD.print("Score:", 100, 80);
+//  myGLCD.printNumI(score,200, 80);
+//  myGLCD.print("Restarting...", CENTER, 120);
+//  myGLCD.setFont(SevenSegNumFont);
+//  myGLCD.printNumI(2,CENTER, 150);
+//  delay(1000);
+//  myGLCD.printNumI(1,CENTER, 150);
+  delay(1000);
+  
+  // Writes the highest score in the EEPROM
+  if (score > highestScore) {
+    highestScore = score;
+    EEPROM.write(0,highestScore);
+  }
+  // Resets the variables to start position values
+  xP=319;
+  yB=50;
+  fallRate=0;
+  score = 0;
+  lastSpeedUpScore = 0;
+  movingRate = 3;  
+  gameStarted = false;
+  // Restart game
+  loop();
+}

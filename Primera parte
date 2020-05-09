@@ -1,0 +1,57 @@
+//**************************************************************************************************
+//Juan Pablo Gomes Villela 17517                                                              ******
+//José Pablo De León Salguero 17001                                                           ******
+//Digital 2                                                                                   ******
+//PROYECTO: CARRO 8 BITS                                                                      ******
+//***************************************************************************************************
+
+//******************************************************************************
+//ESTA PARTE ES LA IMPLEMENTACION DE TODAS LAS LIBRERIAS NECESARIAS 
+//PARA PODER INICIALIZAR LA PANTALA ILI9341 EN ARDUINO 
+#include <SPI.h>
+#include <Adafruit_TFTLCD.h>
+#include <Adafruit_GFX.h>
+#include <MCUFRIEND_kbv.h>
+MCUFRIEND_kbv tft;
+#include <UTFT.h> 
+#include <URTouch.h>
+#include <EEPROM.h>
+#include "COLORES.h"
+//***************************************************************************** 
+//SE DECLARA LAS VARIABLES A UTILIZAR PARA LOS BOTONES 
+//DE LOS DOS JUGADORES 
+//********************************************************************************
+const int dere1 = 10;
+const int izqu1 = 11;
+const int dere2 = 12; 
+const int izqu2 = 13; 
+int buttonState1 = 0;
+int buttonState2 = 0;
+int buttonState3 = 0;
+int buttonState4 = 0;
+int color;
+int x;
+int x2;
+int y;
+int y2;
+int n=1;
+int push = 0;
+int xP = 319;
+int yP = 100;
+int yB = 50;
+int movingRate = 3;
+int fallRateInt = 0;
+float fallRate = 0;
+int score = 0;
+int lastSpeedUpScore = 0;
+int highestScore;
+boolean screenPressed = false;
+boolean gameStarted = false;
+//**************************************************************
+// Pines de conexion del LCD CON ARDUINO 
+//************************************************************
+#define LCD_RESET A4 // LCD Reset - Pin Analogico 4
+#define LCD_CS A3 // Chip Select - Pin analogico 3
+#define LCD_RS  A2 // Command/Data - Pin Analogico 2
+#define LCD_WR A1 // LCD Write - Pin Analogico 1
+#define LCD_RD A0 // LCD Read - Pin Analogico 0

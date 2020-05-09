@@ -1,0 +1,41 @@
+//**********************************************
+//Funcion para crear la pantalla 
+// DE GAME OVER DEL JUEGO
+//-------------------------------------------
+  void gameOver() {
+  delay(3000); // 1 second
+  // Clears the screen and prints the text
+   tft.reset();
+   uint16_t identifier = tft.readID();
+  Serial.print("ID=0x");
+  Serial.println(identifier, HEX);
+  if(identifier == 0xEFEF) identifier = 0x9486;
+  tft.begin(identifier);
+  tft.setRotation (1);
+  tft.fillScreen(BLACK); //COLOR DEL FONDO PANTALLA 
+  myGLCD.print("GAME OVER", CENTER, 40);
+  myGLCD.print("Score:", 100, 80);
+  myGLCD.printNumI(score,200, 80);
+  myGLCD.print("Restarting...", CENTER, 120);
+  myGLCD.setFont(SevenSegNumFont);
+  myGLCD.printNumI(2,CENTER, 150);
+  delay(1000);
+  myGLCD.printNumI(1,CENTER, 150);
+  delay(1000);
+  
+  // Writes the highest score in the EEPROM
+  if (score > highestScore) {
+    highestScore = score;
+    EEPROM.write(0,highestScore);
+  }
+  // Resets the variables to start position values
+  xP=319;
+  yB=50;
+  fallRate=0;
+  score = 0;
+  lastSpeedUpScore = 0;
+  movingRate = 3;  
+  gameStarted = false;
+  // Restart game
+  loop();
+}

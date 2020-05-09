@@ -1,0 +1,74 @@
+//**********************************************************************
+void loop() {
+//gameOver();
+  uint16_t dx, rgb, n, wid, ht;
+  wid = tft.width();  // 480
+  ht = tft.height();  // 320
+  
+  Serial.print("wid: ");
+  Serial.println(wid);
+  Serial.print("ht: ");
+  Serial.println(ht);
+//*******************************************************************************
+//LLAMDA DE BITMAP, QUE ESTAN EN LA PARTE DE ICONS 
+//DONDE SE ENCUENTRAN LA MATRICES DE ESTOS 
+//*****************************************************************************
+   extern const uint8_t carro_dos[];
+  extern const uint8_t carro_cinco[];
+  extern const uint8_t carro1_dos[];
+  extern const uint8_t carro1_cuatro[];
+  
+//***********************************************************************************
+linea(); ///SE LLAMA FUNCION PARA CREAR LA CARRETERA DE LOS JUGADORES 
+nuve(); //SE LLAMA LOS OBSTACULOS QUE TIENEN QUE APARECER CIERTO TIEMPO
+//***********************************************************************************  
+ buttonState1 = digitalRead(dere1);  //DECLARACION DE LOS 
+ buttonState2 = digitalRead(dere2);  //LOS BOTONES PARA QUE SEAN LIDOS 
+ buttonState3 = digitalRead(izqu1);
+ buttonState4 = digitalRead(izqu2);
+
+//---------------------------------------------------------------------------
+//PARTE EN LA CUAL ES PARA PRESIONAR LOS BOTONES Y CADA UNA DE LAS 
+//FUNCIONES QUE SON PARA MOVER EL CARRO SE ACCIONEN 
+//**************************************************************************
+  if (dere1 == 1 && dere2 == 1
+  ){
+   tft.setAddrWindow(120,70,120+48-1,70+32-1);
+  tft.pushColors(carro_cinco, 1536, 1);
+  tft.setAddrWindow(120,200,120+45-1,200+32-1);
+  tft.pushColors(carro1_cuatro, 1456, 1);
+    
+    }
+   else if (izqu1 == 0 && izqu == 0
+  ){
+    tft.setAddrWindow(120,70,120+48-1,70+32-1);
+  tft.pushColors(carro_cinco, 1536, 1);
+  tft.setAddrWindow(120,200,120+45-1,200+32-1);
+  tft.pushColors(carro1_cuatro, 1456, 1);
+    }
+
+    else if (izqu1 == 1 && izqu == 1
+  ){
+    tft.setAddrWindow(120,70,120+48-1,70+32-1);
+  tft.pushColors(carro_cinco, 1536, 1);
+  tft.setAddrWindow(120,200,120+45-1,200+32-1);
+  tft.pushColors(carro1_cuatro, 1456, 1);
+    }
+  
+//************************************************************************************
+//************************************************************************************
+
+//******************************************************************************
+//*****************************
+//CARRO LOS DOS
+//******************************
+  
+  
+
+  
+  tft.setAddrWindow(wid - 240 - 40, 20 + 50, wid - 1 - 100, 70 + 83 - 1);
+//  tft.pushColors(VS_Chem10083, 8300, 1);
+  delay(8);
+
+
+}
